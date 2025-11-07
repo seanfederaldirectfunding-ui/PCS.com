@@ -113,9 +113,9 @@ export function SignInForm({ onSuccess, onSwitchToSignUp, onSwitchToReset }: Sig
       </div>
 
       <div className="pt-4 border-t border-white/10">
-        <p className="text-xs text-white/60 text-center mb-2">Master Admin Account:</p>
+        {/* <p className="text-xs text-white/60 text-center mb-2">Master Admin Account:</p>
         <p className="text-xs text-cyan-400 text-center">Username: demo</p>
-        <p className="text-xs text-cyan-400 text-center">Password: demo123</p>
+        <p className="text-xs text-cyan-400 text-center">Password: demo123</p> */}
       </div>
     </form>
   )
