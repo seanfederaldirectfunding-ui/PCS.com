@@ -27,12 +27,13 @@ class VoIPStudioService {
 
   constructor() {
     this.config = {
-      apiKey: process.env.VOIPSTUDIO_API_KEY || "",
+      apiKey: process.env.VOIPSTUDIO_API_KEY || "26d829cb5de77276b5740abfb456b6a41a8744b0",
       username: process.env.NEXT_PUBLIC_VOIP_USERNAME || "388778",
       server: process.env.NEXT_PUBLIC_VOIP_SERVER || "amn.sip.ssl7.net",
-      password: process.env.VOIP_PASSWORD || "",
+      password: process.env.VOIP_PASSWORD || "3%Vgn3nQ",
     }
   }
+
 
   // Make a call through VoIPstudio REST API
   async makeCall(request: CallRequest): Promise<CallResponse> {
