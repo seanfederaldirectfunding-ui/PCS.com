@@ -32,8 +32,8 @@ const STORAGE_KEYS = {
 const MASTER_ADMIN: User = {
   id: "master-admin-001",
   email: "sean.federaldirectfunding.@gmail.com",
-  username: "demo",
-  password: "demo123",
+  username: "Seant1234",
+  password: "Seantest1!",
   phone: "2016404635",
   role: "Master Admin",
   tenantId: "master",
