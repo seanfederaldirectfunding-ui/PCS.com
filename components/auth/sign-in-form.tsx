@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { LogIn, AlertCircle } from "lucide-react"
-import { authService } from "@/lib/auth-service"
+import { authAPI } from "@/lib/api-service"
 
 interface SignInFormProps {
   onSuccess: (username: string, role: string) => void
@@ -28,17 +28,23 @@ export function SignInForm({ onSuccess, onSwitchToSignUp, onSwitchToReset }: Sig
     setLoading(true)
 
     try {
-      const result = authService.login(identifier, password)
+      // ✅ Now using Express backend
+      const response = await authAPI.login({ identifier, password })
 
-      if (result.success && result.user) {
-        console.log("[v0] Sign in successful")
-        onSuccess(result.user.username, result.user.role)
+      if (response.data.success && response.data.user) {
+        console.log("[Express] Sign in successful")
+        
+        // Store user data in localStorage
+        localStorage.setItem('page_user', JSON.stringify(response.data.user))
+        localStorage.setItem('page_userId', response.data.user.userId)
+        
+        onSuccess(response.data.user.username, response.data.user.role)
       } else {
-        setError(result.error || "Login failed")
+        setError(response.data.error || "Login failed")
       }
-    } catch (err) {
-      console.error("[v0] Sign in error:", err)
-      setError("An unexpected error occurred")
+    } catch (error: any) {
+      console.error("[Express] Sign in error:", error)
+      setError(error.response?.data?.error || "Login failed. Please try again.")
     } finally {
       setLoading(false)
     }
@@ -110,12 +116,6 @@ export function SignInForm({ onSuccess, onSwitchToSignUp, onSwitchToReset }: Sig
         >
           Don't have an account? Sign up
         </button>
-      </div>
-
-      <div className="pt-4 border-t border-white/10">
-        {/* <p className="text-xs text-white/60 text-center mb-2">Master Admin Account:</p>
-        <p className="text-xs text-cyan-400 text-center">Username: demo</p>
-        <p className="text-xs text-cyan-400 text-center">Password: demo123</p> */}
       </div>
     </form>
   )

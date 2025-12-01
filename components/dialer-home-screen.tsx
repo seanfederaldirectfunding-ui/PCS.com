@@ -8,50 +8,156 @@ import { BulkTexter } from "@/components/bulk-texter"
 import { SMSResponsePanel } from "@/components/sms-response-panel"
 import { StripeCheckout } from "@/components/stripe-checkout"
 import { PaymentHistory } from "@/components/payment-history"
-import { Bot, User, Zap, Phone, Mail, MessageSquare, Send, CreditCard, DollarSign, CheckCircle } from "lucide-react"
-import { useState } from "react"
+import { ContactManager } from "@/components/contact-manager"
+import { CampaignDashboard } from "@/components/campaign-dashboard"
+import { VoicemailManager } from "@/components/voicemail-manager"
+import { CampaignHistory } from "@/components/campaign-history" // ✅ NEW
+import { Bot, User, Zap, Phone, MessageSquare, CreditCard, DollarSign, CheckCircle, Users, Settings, History } from "lucide-react"
+import { useState, useEffect } from "react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { SalesFloorAmbience } from "@/components/sales-floor-ambience"
+import { contactsAPI } from "@/lib/api-service"
+import { authService } from "@/lib/auth-service"
+
+interface Contact {
+  contact_id: string
+  name: string
+  phone: string
+  email?: string
+  company?: string
+  status: "new" | "contacted" | "qualified" | "converted" | "unreachable"
+  lead_score: number
+  assigned_to: "unassigned" | "ai" | "human"
+}
 
 export function DialerHomeScreen() {
-  const [activeTab, setActiveTab] = useState("dialer")
+  const [activeTab, setActiveTab] = useState("contacts")
+  const [stats, setStats] = useState({
+    total_contacts: 0,
+    ai_assigned: 0,
+    human_assigned: 0,
+    unassigned: 0,
+    new_contacts: 0,
+    contacted: 0,
+    qualified: 0,
+    converted: 0
+  })
+  
+  const [showCampaignDashboard, setShowCampaignDashboard] = useState(false)
+  const [selectedContacts, setSelectedContacts] = useState<Contact[]>([])
+  
+  const currentUser = authService.getCurrentUser()
 
-  const stats = [
-    { label: "Contacts Queued", value: "247", color: "text-cyan-400" },
-    { label: "Prospects Today", value: "12", color: "text-green-400" },
-    { label: "Hot Leads", value: "7", color: "text-orange-400" },
-    { label: "Applications", value: "3", color: "text-purple-400" },
+  // Load stats
+  useEffect(() => {
+    loadStats()
+  }, [])
+
+  const loadStats = async () => {
+    if (!currentUser) return
+    try {
+      const response = await contactsAPI.getStats(currentUser.userId)
+      if (response.data.success) {
+        setStats(response.data.stats)
+      }
+    } catch (error) {
+      console.error('Failed to load stats:', error)
+    }
+  }
+
+  // Handle campaign start
+  const handleStartCampaign = (contacts: Contact[]) => {
+    setSelectedContacts(contacts)
+    setShowCampaignDashboard(true)
+  }
+
+  // Handle campaign close
+  const handleCloseCampaign = () => {
+    setShowCampaignDashboard(false)
+    setSelectedContacts([])
+    loadStats() // Refresh stats after campaign
+  }
+
+  const statsCards = [
+    { 
+      label: "Total Contacts", 
+      value: stats.total_contacts.toString(), 
+      color: "text-cyan-400",
+      icon: Users,
+      description: "All contacts in system"
+    },
+    { 
+      label: "AI Assigned", 
+      value: stats.ai_assigned.toString(), 
+      color: "text-purple-400",
+      icon: Bot,
+      description: "Ready for AI campaigns"
+    },
+    { 
+      label: "Human Assigned", 
+      value: stats.human_assigned.toString(), 
+      color: "text-green-400",
+      icon: User,
+      description: "Ready for human calls"
+    },
+    { 
+      label: "Unassigned", 
+      value: stats.unassigned.toString(), 
+      color: "text-orange-400",
+      icon: Zap,
+      description: "Need assignment"
+    },
   ]
 
-  const channels = [
-    { name: "Email", icon: Mail, color: "bg-blue-500" },
-    { name: "SMS", icon: MessageSquare, color: "bg-green-500" },
-    { name: "Voice", icon: Phone, color: "bg-purple-500" },
-    { name: "WhatsApp", icon: MessageSquare, color: "bg-emerald-500" },
-    { name: "Telegram", icon: Send, color: "bg-sky-500" },
-    { name: "Signal", icon: MessageSquare, color: "bg-indigo-500" },
-    { name: "Facebook", icon: MessageSquare, color: "bg-blue-600" },
-    { name: "Instagram", icon: MessageSquare, color: "bg-pink-500" },
-    { name: "Snapchat", icon: MessageSquare, color: "bg-yellow-400" },
+  const statusCards = [
+    {
+      label: "New Contacts",
+      value: stats.new_contacts.toString(),
+      color: "text-blue-400",
+      icon: Users,
+      description: "Never contacted"
+    },
+    {
+      label: "Contacted",
+      value: stats.contacted.toString(),
+      color: "text-yellow-400",
+      icon: Phone,
+      description: "Successfully reached"
+    },
+    {
+      label: "Qualified",
+      value: stats.qualified.toString(),
+      color: "text-purple-400",
+      icon: CheckCircle,
+      description: "Promising leads"
+    },
+    {
+      label: "Converted",
+      value: stats.converted.toString(),
+      color: "text-green-400",
+      icon: DollarSign,
+      description: "Successful conversions"
+    },
   ]
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <Card className="bg-gradient-to-r from-cyan-900/40 to-blue-900/40 border-cyan-500/30 backdrop-blur-sm p-6">
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
           <div>
-            <h3 className="text-2xl font-bold text-white mb-2">Complete Business Solution</h3>
+            <h3 className="text-2xl font-bold text-white mb-2">Professional Power Dialer</h3>
             <p className="text-white/80">
-              Power dialer, CRM, bulk messaging, payment processing, and automation - all in one platform
+              Multi-agent call center with AMD, voicemail drop, and real-time analytics
             </p>
           </div>
           <div className="flex flex-wrap gap-3">
             {[
-              "AI-Powered Dialing",
-              "Multi-Channel Messaging",
-              "Stripe Payments",
-              "Lead Automation",
-              "Document Collection",
+              "Answering Machine Detection",
+              "Voicemail Drop",
+              "Call Pacing Control",
+              "Real-time Analytics",
+              "Multi-Agent Support",
             ].map((feature) => (
               <Badge key={feature} className="bg-cyan-500/20 text-cyan-300 border-cyan-400/30 px-3 py-1">
                 <CheckCircle className="h-3 w-3 mr-1" />
@@ -64,9 +170,21 @@ export function DialerHomeScreen() {
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="bg-black/40 border border-white/10 backdrop-blur-sm">
+          <TabsTrigger value="contacts" className="data-[state=active]:bg-cyan-500/20">
+            <Users className="h-4 w-4 mr-2" />
+            Contact Manager
+          </TabsTrigger>
+          <TabsTrigger value="voicemail" className="data-[state=active]:bg-cyan-500/20">
+            <MessageSquare className="h-4 w-4 mr-2" />
+            Voicemail Messages
+          </TabsTrigger>
           <TabsTrigger value="dialer" className="data-[state=active]:bg-cyan-500/20">
             <Phone className="h-4 w-4 mr-2" />
-            Dialer & Messaging
+            Manual Dialer
+          </TabsTrigger>
+          <TabsTrigger value="campaign-history" className="data-[state=active]:bg-cyan-500/20"> {/* ✅ NEW TAB */}
+            <History className="h-4 w-4 mr-2" />
+            Campaign History
           </TabsTrigger>
           <TabsTrigger value="checkout" className="data-[state=active]:bg-cyan-500/20">
             <CreditCard className="h-4 w-4 mr-2" />
@@ -78,167 +196,119 @@ export function DialerHomeScreen() {
           </TabsTrigger>
         </TabsList>
 
+        {/* Contact Manager Tab */}
+        <TabsContent value="contacts" className="mt-6">
+          <ContactManager 
+            onStartCampaign={handleStartCampaign}
+          />
+        </TabsContent>
+
+        {/* Voicemail Messages Tab */}
+        <TabsContent value="voicemail" className="mt-6">
+          <VoicemailManager />
+        </TabsContent>
+
+        {/* Manual Dialer & Messaging Tab */}
         <TabsContent value="dialer" className="space-y-6 mt-6">
-          {/* Top Row - Stats and Soft Phone */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Stats Dashboard */}
+            {/* Stats and Quick Actions */}
             <div className="lg:col-span-2 space-y-6">
+              {/* Contact Stats */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {stats.map((stat) => (
-                  <Card key={stat.label} className="bg-black/40 border-white/10 backdrop-blur-sm p-4">
-                    <p className="text-xs text-white/60 mb-1">{stat.label}</p>
-                    <p className={`text-3xl font-bold ${stat.color}`}>{stat.value}</p>
+                {statsCards.map((stat) => (
+                  <Card key={stat.label} className="bg-black/40 border-white/10 backdrop-blur-sm p-4 hover:bg-white/5 transition-colors">
+                    <div className="flex items-center gap-3">
+                      <div className={`p-2 rounded-lg bg-white/5`}>
+                        <stat.icon className={`h-5 w-5 ${stat.color}`} />
+                      </div>
+                      <div>
+                        <p className="text-xs text-white/60 mb-1">{stat.label}</p>
+                        <p className={`text-2xl font-bold ${stat.color}`}>{stat.value}</p>
+                        <p className="text-xs text-white/40 mt-1">{stat.description}</p>
+                      </div>
+                    </div>
                   </Card>
                 ))}
               </div>
 
-              {/* Dialer Modes */}
-              <div className="space-y-4">
-                <h2 className="text-2xl font-bold text-white">Select Dialing Mode</h2>
-
-                {/* Unattended AI Mode */}
-                <Card className="bg-gradient-to-br from-purple-900/40 to-purple-600/20 border-purple-500/30 backdrop-blur-sm p-6 hover:border-purple-400/50 transition-all">
-                  <div className="flex items-start justify-between mb-4">
+              {/* Status Stats */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {statusCards.map((stat) => (
+                  <Card key={stat.label} className="bg-black/40 border-white/10 backdrop-blur-sm p-4 hover:bg-white/5 transition-colors">
                     <div className="flex items-center gap-3">
-                      <div className="h-12 w-12 rounded-lg bg-purple-500/20 flex items-center justify-center">
-                        <Bot className="h-6 w-6 text-purple-400" />
+                      <div className={`p-2 rounded-lg bg-white/5`}>
+                        <stat.icon className={`h-5 w-5 ${stat.color}`} />
                       </div>
                       <div>
-                        <h3 className="text-xl font-bold text-white">Unattended AI</h3>
-                        <p className="text-sm text-purple-300">Fully automated calling</p>
+                        <p className="text-xs text-white/60 mb-1">{stat.label}</p>
+                        <p className={`text-2xl font-bold ${stat.color}`}>{stat.value}</p>
+                        <p className="text-xs text-white/40 mt-1">{stat.description}</p>
                       </div>
                     </div>
-                    <Badge className="bg-purple-500/20 text-purple-300 border-purple-400/30">AI Powered</Badge>
-                  </div>
-                  <ul className="space-y-2 mb-4">
-                    <li className="text-sm text-white/80 flex items-center gap-2">
-                      <div className="h-1.5 w-1.5 rounded-full bg-purple-400" />
-                      AI cold calls automatically
-                    </li>
-                    <li className="text-sm text-white/80 flex items-center gap-2">
-                      <div className="h-1.5 w-1.5 rounded-full bg-purple-400" />
-                      Pre-screens leads intelligently
-                    </li>
-                    <li className="text-sm text-white/80 flex items-center gap-2">
-                      <div className="h-1.5 w-1.5 rounded-full bg-purple-400" />
-                      Collects documents automatically
-                    </li>
-                  </ul>
-                  <Button className="w-full bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white">
-                    Start AI Only
-                  </Button>
-                </Card>
-
-                {/* Human Only Mode */}
-                <Card className="bg-gradient-to-br from-green-900/40 to-green-600/20 border-green-500/30 backdrop-blur-sm p-6 hover:border-green-400/50 transition-all">
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-center gap-3">
-                      <div className="h-12 w-12 rounded-lg bg-green-500/20 flex items-center justify-center">
-                        <User className="h-6 w-6 text-green-400" />
-                      </div>
-                      <div>
-                        <h3 className="text-xl font-bold text-white">Human Only</h3>
-                        <p className="text-sm text-green-300">Manual agent control</p>
-                      </div>
-                    </div>
-                    <Badge className="bg-green-500/20 text-green-300 border-green-400/30">Agent Control</Badge>
-                  </div>
-                  <ul className="space-y-2 mb-4">
-                    <li className="text-sm text-white/80 flex items-center gap-2">
-                      <div className="h-1.5 w-1.5 rounded-full bg-green-400" />
-                      Power dialer for agents
-                    </li>
-                    <li className="text-sm text-white/80 flex items-center gap-2">
-                      <div className="h-1.5 w-1.5 rounded-full bg-green-400" />
-                      Predictive mode available
-                    </li>
-                    <li className="text-sm text-white/80 flex items-center gap-2">
-                      <div className="h-1.5 w-1.5 rounded-full bg-green-400" />
-                      Full agent control
-                    </li>
-                  </ul>
-                  <Button className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white">
-                    Start Human
-                  </Button>
-                </Card>
-
-                {/* Hybrid Mode */}
-                <Card className="bg-gradient-to-br from-orange-900/40 to-orange-600/20 border-orange-500/30 backdrop-blur-sm p-6 hover:border-orange-400/50 transition-all">
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-center gap-3">
-                      <div className="h-12 w-12 rounded-lg bg-orange-500/20 flex items-center justify-center">
-                        <Zap className="h-6 w-6 text-orange-400" />
-                      </div>
-                      <div>
-                        <h3 className="text-xl font-bold text-white">Hybrid Mode</h3>
-                        <p className="text-sm text-orange-300">Best of both worlds</p>
-                      </div>
-                    </div>
-                    <Badge className="bg-orange-500/20 text-orange-300 border-orange-400/30">Recommended</Badge>
-                  </div>
-                  <ul className="space-y-2 mb-4">
-                    <li className="text-sm text-white/80 flex items-center gap-2">
-                      <div className="h-1.5 w-1.5 rounded-full bg-orange-400" />
-                      Agent dials out manually
-                    </li>
-                    <li className="text-sm text-white/80 flex items-center gap-2">
-                      <div className="h-1.5 w-1.5 rounded-full bg-orange-400" />
-                      AI handles incoming calls
-                    </li>
-                    <li className="text-sm text-white/80 flex items-center gap-2">
-                      <div className="h-1.5 w-1.5 rounded-full bg-orange-400" />
-                      Best of both worlds
-                    </li>
-                  </ul>
-                  <Button className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white">
-                    Start Hybrid
-                  </Button>
-                </Card>
+                  </Card>
+                ))}
               </div>
 
-              {/* Multi-Channel Auto-Send */}
+              {/* Quick Actions */}
               <Card className="bg-black/40 border-white/10 backdrop-blur-sm p-6">
-                <h3 className="text-lg font-bold text-white mb-4">Multi-Channel Auto-Send</h3>
-                <div className="grid grid-cols-3 md:grid-cols-5 gap-3">
-                  {channels.map((channel) => (
-                    <div key={channel.name} className="relative">
-                      <div
-                        className={`${channel.color} rounded-lg p-3 flex flex-col items-center gap-2 hover:scale-105 transition-transform cursor-pointer`}
-                      >
-                        <channel.icon className="h-5 w-5 text-white" />
-                        <span className="text-xs text-white font-medium">{channel.name}</span>
-                      </div>
-                      <Badge className="absolute -top-2 -right-2 bg-green-500 text-white text-xs px-1.5 py-0.5">
-                        Auto
-                      </Badge>
-                    </div>
-                  ))}
+                <h3 className="text-lg font-bold text-white mb-4">Quick Actions</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <Button 
+                    className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white h-16"
+                    onClick={() => setActiveTab("contacts")}
+                  >
+                    <Phone className="h-5 w-5 mr-2" />
+                    Start New Campaign
+                  </Button>
+                  <Button 
+                    className="bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white h-16"
+                    onClick={() => setActiveTab("voicemail")}
+                  >
+                    <MessageSquare className="h-5 w-5 mr-2" />
+                    Manage Voicemails
+                  </Button>
                 </div>
               </Card>
             </div>
 
-            {/* Soft Phone Widget - Right Side */}
+            {/* Soft Phone Widget */}
             <div className="lg:col-span-1">
               <SoftPhone />
             </div>
           </div>
 
+          {/* Messaging Components */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <BulkTexter />
             <SMSResponsePanel />
           </div>
         </TabsContent>
 
+        {/* ✅ NEW: Campaign History Tab */}
+        <TabsContent value="campaign-history" className="mt-6">
+          <CampaignHistory />
+        </TabsContent>
+
+        {/* Stripe Checkout Tab */}
         <TabsContent value="checkout" className="mt-6">
           <StripeCheckout />
         </TabsContent>
 
+        {/* Payment History Tab */}
         <TabsContent value="payments" className="mt-6">
           <PaymentHistory />
         </TabsContent>
       </Tabs>
 
       <SalesFloorAmbience />
+
+      {/* Campaign Dashboard Modal */}
+      {showCampaignDashboard && (
+        <CampaignDashboard 
+          selectedContacts={selectedContacts}
+          onClose={handleCloseCampaign}
+        />
+      )}
     </div>
   )
 }

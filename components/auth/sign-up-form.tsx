@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { UserPlus, AlertCircle, CheckCircle } from "lucide-react"
-import { authService } from "@/lib/auth-service"
+import { authAPI } from "@/lib/api-service"
 
 interface SignUpFormProps {
   onSuccess: () => void
@@ -48,26 +48,30 @@ export function SignUpForm({ onSuccess, onSwitchToSignIn }: SignUpFormProps) {
         return
       }
 
-      const result = authService.register(email, username, password, cleanPhone)
+      // ✅ Now using Express backend
+      const response = await authAPI.register({ 
+        email, 
+        username, 
+        password, 
+        phone: cleanPhone 
+      })
 
-      if (result.success) {
-        console.log("[v0] Registration successful")
+      if (response.data.success) {
+        console.log("[Express] Registration successful")
         setSuccess(true)
         setTimeout(() => {
           onSuccess()
         }, 2000)
       } else {
-        setError(result.error || "Registration failed")
+        setError(response.data.error || "Registration failed")
       }
-    } catch (err) {
-      console.error("[v0] Sign up error:", err)
-      setError("An unexpected error occurred")
+    } catch (error: any) {
+      console.error("[Express] Sign up error:", error)
+      setError(error.response?.data?.error || "Registration failed. Please try again.")
     } finally {
       setLoading(false)
     }
   }
-
-  const userCount = authService.getUserCount()
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -185,10 +189,6 @@ export function SignUpForm({ onSuccess, onSwitchToSignIn }: SignUpFormProps) {
         >
           Already have an account? Sign in
         </button>
-      </div>
-
-      <div className="pt-4 border-t border-white/10">
-        <p className="text-xs text-white/60 text-center">Tenant Accounts: {userCount} / 10,000</p>
       </div>
     </form>
   )

@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { KeyRound, AlertCircle, CheckCircle, Phone } from "lucide-react"
-import { authService } from "@/lib/auth-service"
+import { authService } from "@/lib/auth-service1"
 
 interface PasswordResetFormProps {
   onSuccess: () => void
