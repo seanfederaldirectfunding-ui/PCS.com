@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Make the call via VoIPStudio
-    const callResult = await voipService.makeCall(to, from);
+    const callResult = await voipService.makeCall({ to, from });
 
     if (!callResult.success) {
       return NextResponse.json({ error: callResult.error }, { status: 500 });
