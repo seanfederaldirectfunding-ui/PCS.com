@@ -39,10 +39,8 @@ export default function Home() {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [showLogin, setShowLogin] = useState(false)
   const [user, setUser] = useState<{ username: string; role: string } | null>(null)
-  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
-    setMounted(true)
     const session = authService.getCurrentSession()
     if (session) {
       setIsLoggedIn(true)
@@ -63,10 +61,6 @@ export default function Home() {
     setIsLoggedIn(false)
     setUser(null)
     console.log("[v0] User logged out")
-  }
-
-  if (!mounted) {
-    return null
   }
 
   return (
