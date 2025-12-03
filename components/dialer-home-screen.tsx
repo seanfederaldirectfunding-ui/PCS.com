@@ -8,13 +8,40 @@ import { BulkTexter } from "@/components/bulk-texter"
 import { SMSResponsePanel } from "@/components/sms-response-panel"
 import { StripeCheckout } from "@/components/stripe-checkout"
 import { PaymentHistory } from "@/components/payment-history"
-import { Bot, User, Zap, Phone, Mail, MessageSquare, Send, CreditCard, DollarSign, CheckCircle } from "lucide-react"
+import { ContactsImport } from "@/components/contacts-import"
+import { ContactsList } from "@/components/contacts-list"
+import { Bot, User, Zap, Phone, Mail, MessageSquare, Send, CreditCard, DollarSign, CheckCircle, Users } from "lucide-react"
 import { useState } from "react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { SalesFloorAmbience } from "@/components/sales-floor-ambience"
 
 export function DialerHomeScreen() {
   const [activeTab, setActiveTab] = useState("dialer")
+  const [selectedContact, setSelectedContact] = useState<any>(null)
+
+  const handleCall = async (phone: string, contact?: any) => {
+    console.log('[Dialer] Making call to:', phone, contact)
+    try {
+      const response = await fetch('/api/voip/call', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          to: phone,
+          contactId: contact?.id
+        })
+      })
+
+      const data = await response.json()
+      if (data.success) {
+        alert(`Call initiated to ${phone}`)
+      } else {
+        alert(`Failed to make call: ${data.error}`)
+      }
+    } catch (error) {
+      console.error('[Dialer] Call error:', error)
+      alert('Failed to initiate call')
+    }
+  }
 
   const stats = [
     { label: "Contacts Queued", value: "247", color: "text-cyan-400" },
@@ -37,21 +64,25 @@ export function DialerHomeScreen() {
 
   return (
     <div className="space-y-6">
-      <Card className="bg-gradient-to-r from-cyan-900/40 to-blue-900/40 border-cyan-500/30 backdrop-blur-sm p-6">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-          <div>
-            <h3 className="text-2xl font-bold text-white mb-2">Complete Business Solution</h3>
-            <p className="text-white/80">
-              Power dialer, CRM, bulk messaging, payment processing, and automation - all in one platform
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-3">
-            {[
-              "AI-Powered Dialing",
-              "Multi-Channel Messaging",
-              "Stripe Payments",
-              "Lead Automation",
-              "Document Collection",
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="bg-black/40 border border-white/10 backdrop-blur-sm">
+          <TabsTrigger value="dialer" className="data-[state=active]:bg-cyan-500/20">
+            <Phone className="h-4 w-4 mr-2" />
+            Dialer & Messaging
+          </TabsTrigger>
+          <TabsTrigger value="contacts" className="data-[state=active]:bg-cyan-500/20">
+            <Users className="h-4 w-4 mr-2" />
+            Contacts
+          </TabsTrigger>
+          <TabsTrigger value="checkout" className="data-[state=active]:bg-cyan-500/20">
+            <CreditCard className="h-4 w-4 mr-2" />
+            Stripe Checkout
+          </TabsTrigger>
+          <TabsTrigger value="payments" className="data-[state=active]:bg-cyan-500/20">
+            <DollarSign className="h-4 w-4 mr-2" />
+            Payment History
+          </TabsTrigger>
+        </TabsList>ment Collection",
             ].map((feature) => (
               <Badge key={feature} className="bg-cyan-500/20 text-cyan-300 border-cyan-400/30 px-3 py-1">
                 <CheckCircle className="h-3 w-3 mr-1" />
@@ -225,14 +256,22 @@ export function DialerHomeScreen() {
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <BulkTexter />
-            <SMSResponsePanel />
-          </div>
+        <TabsContent value="contacts" className="space-y-6 mt-6">
+          <ContactsImport />
+          <ContactsList 
+            onSelectContact={setSelectedContact}
+            onCall={handleCall}
+          />
         </TabsContent>
 
         <TabsContent value="checkout" className="mt-6">
           <StripeCheckout />
         </TabsContent>
 
+        <TabsContent value="payments" className="mt-6">
+          <PaymentHistory />
+        </TabsContent>
+      </Tabs>
         <TabsContent value="payments" className="mt-6">
           <PaymentHistory />
         </TabsContent>
