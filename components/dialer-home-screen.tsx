@@ -64,6 +64,31 @@ export function DialerHomeScreen() {
 
   return (
     <div className="space-y-6">
+      <Card className="bg-gradient-to-r from-cyan-900/40 to-blue-900/40 border-cyan-500/30 backdrop-blur-sm p-6">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+          <div>
+            <h3 className="text-2xl font-bold text-white mb-2">Complete Business Solution</h3>
+            <p className="text-white/80">
+              Power dialer, CRM, bulk messaging, payment processing, and automation - all in one platform
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            {[
+              "AI-Powered Dialing",
+              "Multi-Channel Messaging",
+              "Stripe Payments",
+              "Lead Automation",
+              "Document Collection",
+            ].map((feature) => (
+              <Badge key={feature} className="bg-cyan-500/20 text-cyan-300 border-cyan-400/30 px-3 py-1">
+                <CheckCircle className="h-3 w-3 mr-1" />
+                {feature}
+              </Badge>
+            ))}
+          </div>
+        </div>
+      </Card>
+
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="bg-black/40 border border-white/10 backdrop-blur-sm">
           <TabsTrigger value="dialer" className="data-[state=active]:bg-cyan-500/20">
@@ -82,37 +107,10 @@ export function DialerHomeScreen() {
             <DollarSign className="h-4 w-4 mr-2" />
             Payment History
           </TabsTrigger>
-        </TabsList>ment Collection",
-            ].map((feature) => (
-              <Badge key={feature} className="bg-cyan-500/20 text-cyan-300 border-cyan-400/30 px-3 py-1">
-                <CheckCircle className="h-3 w-3 mr-1" />
-                {feature}
-              </Badge>
-            ))}
-          </div>
-        </div>
-      </Card>
-
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="bg-black/40 border border-white/10 backdrop-blur-sm">
-          <TabsTrigger value="dialer" className="data-[state=active]:bg-cyan-500/20">
-            <Phone className="h-4 w-4 mr-2" />
-            Dialer & Messaging
-          </TabsTrigger>
-          <TabsTrigger value="checkout" className="data-[state=active]:bg-cyan-500/20">
-            <CreditCard className="h-4 w-4 mr-2" />
-            Stripe Checkout
-          </TabsTrigger>
-          <TabsTrigger value="payments" className="data-[state=active]:bg-cyan-500/20">
-            <DollarSign className="h-4 w-4 mr-2" />
-            Payment History
-          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="dialer" className="space-y-6 mt-6">
-          {/* Top Row - Stats and Soft Phone */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Stats Dashboard */}
             <div className="lg:col-span-2 space-y-6">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {stats.map((stat) => (
@@ -123,11 +121,9 @@ export function DialerHomeScreen() {
                 ))}
               </div>
 
-              {/* Dialer Modes */}
               <div className="space-y-4">
                 <h2 className="text-2xl font-bold text-white">Select Dialing Mode</h2>
 
-                {/* Unattended AI Mode */}
                 <Card className="bg-gradient-to-br from-purple-900/40 to-purple-600/20 border-purple-500/30 backdrop-blur-sm p-6 hover:border-purple-400/50 transition-all">
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center gap-3">
@@ -160,7 +156,6 @@ export function DialerHomeScreen() {
                   </Button>
                 </Card>
 
-                {/* Human Only Mode */}
                 <Card className="bg-gradient-to-br from-green-900/40 to-green-600/20 border-green-500/30 backdrop-blur-sm p-6 hover:border-green-400/50 transition-all">
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center gap-3">
@@ -193,7 +188,6 @@ export function DialerHomeScreen() {
                   </Button>
                 </Card>
 
-                {/* Hybrid Mode */}
                 <Card className="bg-gradient-to-br from-orange-900/40 to-orange-600/20 border-orange-500/30 backdrop-blur-sm p-6 hover:border-orange-400/50 transition-all">
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center gap-3">
@@ -227,7 +221,6 @@ export function DialerHomeScreen() {
                 </Card>
               </div>
 
-              {/* Multi-Channel Auto-Send */}
               <Card className="bg-black/40 border-white/10 backdrop-blur-sm p-6">
                 <h3 className="text-lg font-bold text-white mb-4">Multi-Channel Auto-Send</h3>
                 <div className="grid grid-cols-3 md:grid-cols-5 gap-3">
@@ -248,7 +241,6 @@ export function DialerHomeScreen() {
               </Card>
             </div>
 
-            {/* Soft Phone Widget - Right Side */}
             <div className="lg:col-span-1">
               <SoftPhone />
             </div>
@@ -256,6 +248,10 @@ export function DialerHomeScreen() {
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <BulkTexter />
+            <SMSResponsePanel />
+          </div>
+        </TabsContent>
+
         <TabsContent value="contacts" className="space-y-6 mt-6">
           <ContactsImport />
           <ContactsList 
@@ -268,10 +264,6 @@ export function DialerHomeScreen() {
           <StripeCheckout />
         </TabsContent>
 
-        <TabsContent value="payments" className="mt-6">
-          <PaymentHistory />
-        </TabsContent>
-      </Tabs>
         <TabsContent value="payments" className="mt-6">
           <PaymentHistory />
         </TabsContent>
