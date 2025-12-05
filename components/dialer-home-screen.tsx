@@ -22,24 +22,26 @@ export function DialerHomeScreen() {
   const handleCall = async (phone: string, contact?: any) => {
     console.log('[Dialer] Making call to:', phone, contact)
     try {
-      const response = await fetch('/api/voip/call', {
+      const response = await fetch('/api/dialer/calls', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           to: phone,
-          contactId: contact?.id
+          from: process.env.NEXT_PUBLIC_VOIPSTUDIO_CALLER_ID || '',
+          contactId: contact?.id,
+          campaignId: null
         })
       })
 
       const data = await response.json()
       if (data.success) {
-        alert(`Call initiated to ${phone}`)
+        alert(`Call initiated to ${phone}${contact?.first_name ? ` (${contact.first_name} ${contact.last_name})` : ''}`)
       } else {
         alert(`Failed to make call: ${data.error}`)
       }
     } catch (error) {
       console.error('[Dialer] Call error:', error)
-      alert('Failed to initiate call')
+      alert('Failed to initiate call. Check console for details.')
     }
   }
 

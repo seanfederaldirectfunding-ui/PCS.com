@@ -45,6 +45,12 @@ CREATE TABLE IF NOT EXISTS public.contacts (
 -- Enable Row Level Security
 ALTER TABLE public.contacts ENABLE ROW LEVEL SECURITY;
 
+-- Drop existing policies if they exist
+DROP POLICY IF EXISTS "Users can view their own contacts" ON public.contacts;
+DROP POLICY IF EXISTS "Users can insert their own contacts" ON public.contacts;
+DROP POLICY IF EXISTS "Users can update their own contacts" ON public.contacts;
+DROP POLICY IF EXISTS "Users can delete their own contacts" ON public.contacts;
+
 -- RLS Policies
 CREATE POLICY "Users can view their own contacts"
   ON public.contacts FOR SELECT
@@ -80,6 +86,7 @@ CREATE INDEX IF NOT EXISTS idx_contacts_search ON public.contacts
   ));
 
 -- Trigger to update updated_at
+DROP TRIGGER IF EXISTS update_contacts_updated_at ON public.contacts;
 CREATE TRIGGER update_contacts_updated_at
   BEFORE UPDATE ON public.contacts
   FOR EACH ROW
@@ -97,6 +104,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS update_contacts_full_name ON public.contacts;
 CREATE TRIGGER update_contacts_full_name
   BEFORE INSERT OR UPDATE OF first_name, last_name ON public.contacts
   FOR EACH ROW
