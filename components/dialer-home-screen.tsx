@@ -18,10 +18,18 @@ import { SalesFloorAmbience } from "@/components/sales-floor-ambience"
 export function DialerHomeScreen() {
   const [activeTab, setActiveTab] = useState("dialer")
   const [selectedContact, setSelectedContact] = useState<any>(null)
+  const [callError, setCallError] = useState<string | null>(null)
 
   const handleCall = async (phone: string, contact?: any) => {
     console.log('[Dialer] Making call to:', phone, contact)
+    setCallError(null)
+    
     try {
+      // Validate environment variables
+      if (!process.env.NEXT_PUBLIC_VOIPSTUDIO_CALLER_ID) {
+        throw new Error('VoIP caller ID not configured. Please check environment variables.')
+      }
+
       const response = await fetch('/api/dialer/calls', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -34,14 +42,21 @@ export function DialerHomeScreen() {
       })
 
       const data = await response.json()
+      
+      if (!response.ok) {
+        throw new Error(data.error || `HTTP ${response.status}: ${response.statusText}`)
+      }
+      
       if (data.success) {
         alert(`Call initiated to ${phone}${contact?.first_name ? ` (${contact.first_name} ${contact.last_name})` : ''}`)
       } else {
-        alert(`Failed to make call: ${data.error}`)
+        throw new Error(data.error || 'Failed to make call')
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('[Dialer] Call error:', error)
-      alert('Failed to initiate call. Check console for details.')
+      const errorMessage = error.message || 'Failed to initiate call. Check console for details.'
+      setCallError(errorMessage)
+      alert(`Call Error: ${errorMessage}`)
     }
   }
 

@@ -26,33 +26,69 @@ class VoIPStudioService {
   private baseUrl = "https://l7api.com/v1.1/voipstudio"
 
   constructor() {
-    this.config = {
-      apiKey: process.env.VOIPSTUDIO_API_KEY || "26d829cb5de77276b5740abfb456b6a41a8744b0",
-      username: process.env.NEXT_PUBLIC_VOIP_USERNAME || "388778",
-      server: process.env.NEXT_PUBLIC_VOIP_SERVER || "amn.sip.ssl7.net",
-      password: process.env.VOIP_PASSWORD || "3%Vgn3nQ",
+    const apiKey = process.env.VOIPSTUDIO_API_KEY;
+    const username = process.env.NEXT_PUBLIC_VOIP_USERNAME;
+    const server = process.env.NEXT_PUBLIC_VOIP_SERVER;
+    const password = process.env.VOIP_PASSWORD;
+
+    if (!apiKey) {
+      console.error("[VoIP] VOIPSTUDIO_API_KEY environment variable is missing");
     }
+    if (!username) {
+      console.error("[VoIP] NEXT_PUBLIC_VOIP_USERNAME environment variable is missing");
+    }
+    if (!server) {
+      console.error("[VoIP] NEXT_PUBLIC_VOIP_SERVER environment variable is missing");
+    }
+    if (!password) {
+      console.error("[VoIP] VOIP_PASSWORD environment variable is missing");
+    }
+
+    this.config = {
+      apiKey: apiKey || "",
+      username: username || "",
+      server: server || "",
+      password: password || "",
+    }
+
+    console.log("[VoIP] Service initialized with:", {
+      hasApiKey: !!apiKey,
+      username: username || 'MISSING',
+      server: server || 'MISSING',
+      hasPassword: !!password
+    });
   }
 
 
   // Make a call through VoIPstudio REST API
   async makeCall(request: CallRequest): Promise<CallResponse> {
     try {
+      // Validate configuration
       if (!this.config.apiKey) {
-        console.error("[v0] VoIPstudio API key not configured")
+        console.error("[VoIP] API key not configured")
         return {
           success: false,
-          error: "VoIPstudio API key not configured",
+          error: "VoIPstudio API key not configured. Please set VOIPSTUDIO_API_KEY environment variable.",
+        }
+      }
+
+      if (!this.config.username || !this.config.server) {
+        console.error("[VoIP] Username or server not configured")
+        return {
+          success: false,
+          error: "VoIP credentials not configured. Please check environment variables.",
         }
       }
 
       // Format phone number to E.164 format (remove non-digits and add +)
       const formattedTo = this.formatPhoneNumber(request.to)
+      const formattedFrom = request.from ? this.formatPhoneNumber(request.from) : this.config.username
 
-      console.log("[v0] Making call via VoIPstudio:", {
+      console.log("[VoIP] Making call via VoIPstudio:", {
         to: formattedTo,
-        from: this.config.username,
+        from: formattedFrom,
         server: this.config.server,
+        apiUrl: `${this.baseUrl}/calls`
       })
 
       const response = await fetch(`${this.baseUrl}/calls`, {
@@ -63,21 +99,34 @@ class VoIPStudioService {
         },
         body: JSON.stringify({
           to: formattedTo,
-          from: request.from || this.config.username,
-          caller_id: request.callerId || formattedTo,
+          from: formattedFrom,
+          caller_id: request.callerId || formattedFrom,
         }),
       })
 
+      const responseText = await response.text()
+      console.log("[VoIP] API Response:", { 
+        status: response.status, 
+        statusText: response.statusText,
+        body: responseText 
+      })
+
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}))
-        console.error("[v0] VoIPstudio API error:", errorData)
+        let errorData: any = {}
+        try {
+          errorData = JSON.parse(responseText)
+        } catch (e) {
+          errorData = { message: responseText || response.statusText }
+        }
+        
+        console.error("[VoIP] API error:", errorData)
         return {
           success: false,
-          error: errorData.message || `API error: ${response.status}`,
+          error: errorData.message || `API error: ${response.status} ${response.statusText}`,
         }
       }
 
-      const data = await response.json()
+      const data = JSON.parse(responseText)
       console.log("[v0] Call initiated successfully:", data)
 
       return {
