@@ -3,6 +3,15 @@ import { voipService } from "@/lib/voipstudio-service"
 
 export async function POST(request: NextRequest) {
   try {
+    // Log environment variable status
+    console.log("[VoIP API] Environment check:", {
+      hasApiKey: !!process.env.VOIPSTUDIO_API_KEY,
+      hasUsername: !!process.env.NEXT_PUBLIC_VOIP_USERNAME,
+      hasServer: !!process.env.NEXT_PUBLIC_VOIP_SERVER,
+      hasPassword: !!process.env.VOIP_PASSWORD,
+      apiKeyPrefix: process.env.VOIPSTUDIO_API_KEY?.substring(0, 10) || 'MISSING'
+    });
+
     const body = await request.json()
     const { to, from, callerId } = body
 
@@ -19,7 +28,15 @@ export async function POST(request: NextRequest) {
     })
 
     if (!result.success) {
-      return NextResponse.json({ success: false, error: result.error }, { status: 500 })
+      console.error("[VoIP API] Call failed:", result.error);
+      return NextResponse.json({ 
+        success: false, 
+        error: result.error,
+        debug: {
+          hasApiKey: !!process.env.VOIPSTUDIO_API_KEY,
+          apiKeyLength: process.env.VOIPSTUDIO_API_KEY?.length || 0
+        }
+      }, { status: 500 })
     }
 
     return NextResponse.json({
