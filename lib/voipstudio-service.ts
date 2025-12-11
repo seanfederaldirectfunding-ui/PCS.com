@@ -84,12 +84,23 @@ class VoIPStudioService {
       const formattedTo = this.formatPhoneNumber(request.to)
       const formattedFrom = request.from ? this.formatPhoneNumber(request.from) : this.config.username
 
+      const requestBody = {
+        to: formattedTo,
+        from: formattedFrom,
+        caller_id: request.callerId || formattedFrom,
+      };
+
       console.log("[VoIP] Making call via VoIPstudio:", {
         to: formattedTo,
         from: formattedFrom,
         server: this.config.server,
-        apiUrl: `${this.baseUrl}/calls`
+        apiUrl: `${this.baseUrl}/calls`,
+        apiKeyLength: this.config.apiKey.length,
+        apiKeyPrefix: this.config.apiKey.substring(0, 10)
       })
+
+      console.log("[VoIP] Request body:", JSON.stringify(requestBody, null, 2))
+      console.log("[VoIP] Full Authorization header:", `Bearer ${this.config.apiKey.substring(0, 15)}...`)
 
       const response = await fetch(`${this.baseUrl}/calls`, {
         method: "POST",
@@ -97,11 +108,7 @@ class VoIPStudioService {
           "Content-Type": "application/json",
           Authorization: `Bearer ${this.config.apiKey}`,
         },
-        body: JSON.stringify({
-          to: formattedTo,
-          from: formattedFrom,
-          caller_id: request.callerId || formattedFrom,
-        }),
+        body: JSON.stringify(requestBody),
       })
 
       const responseText = await response.text()
